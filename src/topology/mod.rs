@@ -64,6 +64,8 @@ pub type Rank = c_int;
 /// 6.4
 #[derive(Copy, Clone)]
 pub struct SystemCommunicator(MPI_Comm);
+unsafe impl Send for SystemCommunicator {}
+unsafe impl Sync for SystemCommunicator {}
 
 impl SystemCommunicator {
     /// The 'world communicator'

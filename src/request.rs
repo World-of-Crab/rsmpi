@@ -481,14 +481,14 @@ unsafe impl<'a, 'b> Scope<'a> for &'b LocalScope<'a> {
         self.num_requests.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
     }
 
-    unsafe fn unregister(&self) {
+    unsafe fn unregister(&self){
         self.num_requests.fetch_sub(1, std::sync::atomic::Ordering::SeqCst);
         /*self.num_requests.set(
             self.num_requests
                 .get()
                 .checked_sub(1)
-                .expect("unregister has been called more times than register"),*/
-        )
+                .expect("unregister has been called more times than register"),
+        )*/
     }
 }
 

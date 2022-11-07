@@ -34,6 +34,7 @@ use std::marker::PhantomData;
 use std::mem::{self, MaybeUninit};
 use std::os::raw::c_int;
 use std::ptr;
+use std::sync::atomic::AtomicUsize;
 
 use crate::ffi;
 use crate::ffi::{MPI_Request, MPI_Status};
@@ -452,8 +453,8 @@ unsafe impl Scope<'static> for StaticScope {
 /// yet been completed.
 #[derive(Debug)]
 pub struct LocalScope<'a> {
-    num_requests: Cell<usize>,
-    phantom: PhantomData<Cell<&'a ()>>, // Cell needed to ensure 'a is invariant
+    num_requests: AtomicUsize,
+    phantom: PhantomData<&'a ()>,
 }
 
 #[cold]
@@ -469,7 +470,7 @@ fn abort_on_unhandled_request() {
 
 impl<'a> Drop for LocalScope<'a> {
     fn drop(&mut self) {
-        if self.num_requests.get() != 0 {
+        if self.num_requests.load(std::sync::atomic::Ordering::SeqCst) != 0 {
             abort_on_unhandled_request();
         }
     }
@@ -477,15 +478,16 @@ impl<'a> Drop for LocalScope<'a> {
 
 unsafe impl<'a, 'b> Scope<'a> for &'b LocalScope<'a> {
     fn register(&self) {
-        self.num_requests.set(self.num_requests.get() + 1)
+        self.num_requests.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
     }
 
     unsafe fn unregister(&self) {
-        self.num_requests.set(
+        self.num_requests.fetch_sub(1, std::sync::atomic::Ordering::SeqCst);
+        /*self.num_requests.set(
             self.num_requests
                 .get()
                 .checked_sub(1)
-                .expect("unregister has been called more times than register"),
+                .expect("unregister has been called more times than register"),*/
         )
     }
 }

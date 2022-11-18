@@ -926,6 +926,11 @@ impl Status {
         self.0.MPI_TAG
     }
 
+    /// The message tag
+    pub fn error(&self) -> super::Error {
+        self.0.MPI_ERROR
+    }
+
     /// Number of instances of the type contained in the message
     pub fn count<D: Datatype>(&self, d: D) -> Count {
         unsafe { with_uninitialized(|count| ffi::MPI_Get_count(&self.0, d.as_raw(), count)).1 }

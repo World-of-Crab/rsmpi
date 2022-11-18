@@ -926,9 +926,18 @@ impl Status {
         self.0.MPI_TAG
     }
 
-    /// The message tag
+    /// The error code
     pub fn error(&self) -> super::Error {
         self.0.MPI_ERROR
+    }
+
+    /// Is status cancelled
+    pub fn is_cancelled(&self) -> bool {
+        //TODO does it work?
+        unsafe {
+            let mut flag = 0;
+            ffi::MPI_Test_cancelled(&self.0, &mut flag) == 0
+        }
     }
 
     /// Number of instances of the type contained in the message
@@ -945,6 +954,13 @@ impl fmt::Debug for Status {
             self.source_rank(),
             self.tag()
         )
+    }
+}
+
+unsafe impl AsRaw for Status {
+    type Raw = MPI_Status;
+    fn as_raw(&self) -> Self::Raw {
+        self.0
     }
 }
 

@@ -715,16 +715,18 @@ impl<'a, D: ?Sized> RequestCollection<'a, D> {
             );
         }
 
-        let count: usize = count.try_into().expect("could not cast c_int to usize");
-        result.reserve(count);
-        for i in 0..count {
-            let idx: usize = self.indices[i]
-                .try_into()
-                .expect("could not cast c_int to usize");
-            assert!(is_null(self.requests[idx]));
-            let status = unsafe { self.statuses[idx].assume_init() };
-            if let Some(data) = self.data[idx].take() {
-                result.push((idx, Status::from_raw(status), data));
+        if count > 0 {
+            let count: usize = count.try_into().expect("could not cast c_int to usize");
+            result.reserve(count);
+            for i in 0..count {
+                let idx: usize = self.indices[i]
+                    .try_into()
+                    .expect("could not cast c_int to usize");
+                assert!(is_null(self.requests[idx]));
+                let status = unsafe { self.statuses[idx].assume_init() };
+                if let Some(data) = self.data[idx].take() {
+                    result.push((idx, Status::from_raw(status), data));
+                }
             }
         }
     }
